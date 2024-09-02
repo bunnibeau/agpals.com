@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgPals</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #FFFFFF;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #2C8437;
+            color: #FFFFFF;
+            padding: 10px 20px;
+            text-align: center;
+        }
+        nav ul {
+            list-style-type: none;
+            padding: 0;
+            text-align: center;
+        }
+        nav ul li {
+            display: inline;
+            margin-right: 20px;
+        }
+        nav ul li a {
+            color: #FFFFFF;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        main {
+            padding: 20px;
+        }
+        .section {
+            display: none; /* Hide all sections by default */
+        }
+        .section.active {
+            display: block; /* Show only the active section */
+        }
+        h1 {
+            font-size: 32px;
+            color: #2C8437;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 18px;
+            line-height: 1.5;
+            color: #333333;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+        }
+        .chat-message img {
+            max-width: 100px;
+            max-height: 100px;
+            margin-top: 5px;
+        }
+        .image-caption {
+            font-size: 14px;
+            color: #777777;
+            text-align: left;
+        }
+        .timestamp {
+            font-size: 12px;
+            color: #777777;
+            display: block;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>AgPals</h1>
+        <nav>
+            <ul>
+                <li><a href="#" onclick="showSection('home')">Home</a></li>
+                <li><a href="#" onclick="showSection('information')">Information</a></li>
+                <li><a href="#" onclick="showSection('chatbox')">Chat Room</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <!-- Home Section -->
+        <div id="home" class="section active">
+            <h1>Welcome to AgPals!</h1>
+            <p>Discover opportunities for youth in 4-H programs across the nation. Explore projects, find events, and connect with your local 4-H community.</p>
+        </div>
+
+        <!-- Information Section -->
+        <div id="information" class="section">
+            <h1>Information Page</h1>
+            <div>
+                <img src="https://www.firstbenefits.org/wp-content/uploads/2017/10/placeholder-1024x1024.png" alt="Image 1" width="200" height="200">
+                <p class="image-caption">Caption or reference for Image 1</p>
+            </div>
+            <!-- Add more images as needed -->
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris a ex at nisi varius tempus.</p>
+            <!-- Add more text as needed -->
+        </div>
+
+        <!-- Chat Room Section -->
+        <div id="chatbox" class="section">
+            <h1>Chat Room / Community Page</h1>
+            <div id="chat-box">
+                <!-- Chat messages will be displayed here -->
+            </div>
+
+            <form id="comment-form">
+                <label for="name">Name:</label><br>
+                <input type="text" id="name" name="name"><br>
+                <label for="comment">Comment:</label><br>
+                <textarea id="comment" name="comment" rows="4" cols="50"></textarea><br>
+                <label for="file-upload">Upload Image/Gif:</label><br>
+                <input type="file" id="file-upload" name="file-upload" accept="image/*,video/*"><br>
+                <button type="submit">Submit</button>
+            </form>
+
+            <script>
+                const MESSAGE_EXPIRATION_TIME = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+                // Function to format the timestamp into a readable string (Hour:Minute AM/PM)
+                function formatTimestamp(timestamp) {
+                    const date = new Date(timestamp);
+                    let hours = date.getHours();
+                    const minutes = date.getMinutes();
+                    const ampm = hours >= 12 ? 'PM' : 'AM';
+                    hours = hours % 12;
+                    hours = hours ? hours : 12; // the hour '0' should be '12'
+                    const strMinutes = minutes < 10 ? '0' + minutes : minutes;
+                    return hours + ':' + strMinutes + ' ' + ampm;
+                }
+
+                // Function to save chat history to local storage
+                function saveChatHistory() {
+                    localStorage.setItem('chatHistory', document.getElementById('chat-box').innerHTML);
+                }
+
+                // Function to load chat history from local storage
+                function loadChatHistory() {
+                    const chatHistory = localStorage.getItem('chatHistory');
+                    if (chatHistory) {
+                        document.getElementById('chat-box').innerHTML = chatHistory;
+                    }
+                }
+
+                // Function to clean up expired messages
+                function cleanUpExpiredMessages() {
+                    const now = Date.now();
+                    const messages = document.querySelectorAll('.chat-message');
+                    messages.forEach(message => {
+                        const timestamp = parseInt(message.getAttribute('data-timestamp'), 10);
+                        if (now - timestamp > MESSAGE_EXPIRATION_TIME) {
+                            message.remove();
+                        }
+                    });
+                }
+
+                // Load chat history and start cleanup interval when the page is loaded
+                window.onload = function() {
+                    loadChatHistory();
+                    setInterval(cleanUpExpiredMessages, 60000); // Check every minute
+                };
+
+                document.getElementById("comment-form").addEventListener("submit", function(event) {
+                    event.preventDefault(); // Prevent the form from submitting normally
+
+                    // Get input values
+                    const name = document.getElementById("name").value;
+                    const comment = document.getElementById("comment").value;
+                    const file = document.getElementById("file-upload").files[0];
+
+                    // Create a new message element
+                    const newMessage = document.createElement("div");
+                    newMessage.classList.add("chat-message");
+                    const timestamp = Date.now();
+                    newMessage.setAttribute('data-timestamp', timestamp); // Store the creation time
+                    newMessage.innerHTML = `<strong>${name}:</strong> ${comment}
+                        <span class="timestamp">${formatTimestamp(timestamp)}</span>`;
+
+                    // If a file is uploaded, append it to the message
+                    if (file) {
+                        const fileType = file.type.split("/")[0]; // Check if it's an image or video
+                        if (fileType === "image" || fileType === "video") {
+                            const fileURL = URL.createObjectURL(file);
+                            let fileElement;
+                            if (fileType === "image") {
+                                fileElement = document.createElement("img");
+                            } else if (fileType === "video") {
+                                fileElement = document.createElement("video");
+                                fileElement.controls = true;
+                            }
+                            fileElement.src = fileURL;
+                            newMessage.appendChild(fileElement);
+                        }
+                    }
+
+                    // Append the new message to the chat box
+                    document.getElementById("chat-box").appendChild(newMessage);
+
+                    // Save chat history to local storage
+                    saveChatHistory();
+
+                    // Clear the input fields
+                    document.getElementById("name").value = "";
+                    document.getElementById("comment").value = "";
+                    document.getElementById("file-upload").value = "";
+                });
+            </script>
+        </div>
+    </main>
+
+    <script>
+        // Function to show the selected section and hide others
+        function showSection(sectionId) {
+            var sections = document.querySelectorAll('.section');
+            sections.forEach(function(section) {
+                if (section.id === sectionId) {
+                    section.classList.add('active');
+                } else {
+                    section.classList.remove('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
